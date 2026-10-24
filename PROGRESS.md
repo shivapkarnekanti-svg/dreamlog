@@ -1,4 +1,4 @@
-# Progress
+﻿# Progress
 
 Plan: `PLAN.md`. Rules for working here: `CLAUDE.md`.
 
@@ -34,7 +34,8 @@ M5 (ask the user first: Firebase project ID/region, GitHub repo, any deploy, any
 
 ## Notes
 
-- No Firebase project yet: everything runs on the emulators (`demo-dreamlog`).
+- Firebase project created 2026-10-23: `dreamlog-app-5754` (Spark, region nam5 chosen; Firestore database and Email/Password sign-in still to be enabled in the console). Local work still runs on the emulators (`demo-dreamlog`).
+- GitHub repo: https://github.com/shivapkarnekanti-svg/dreamlog (public, nothing pushed yet).
 - Verified 2026-10-24: `npm run verify` passes (49 unit, 11 rules, 16 e2e on desktop + pixel-390, 0 audit issues).
 - Flaky once under low memory: first journal e2e timed out waiting for the sign-in button; passed on rerun.
 - Fixed during verification: ID token refresh after email verification; recurring-dream detection 5.3s to 0.6s at 2,000 dreams.
