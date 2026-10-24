@@ -1,0 +1,100 @@
+.dreams {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1rem;
+  color: var(--fg, inherit);
+}
+.dreams__bar {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.dreams button {
+  font: inherit;
+  padding: 0.5rem 0.9rem;
+  min-height: 2.5rem;
+  cursor: pointer;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+}
+.dreams button.primary {
+  background: var(--accent, #5b4bdb);
+  border-color: var(--accent, #5b4bdb);
+  color: #fff;
+}
+.dreams button.danger {
+  border-color: #b3261e;
+  color: #b3261e;
+}
+.dreams button:focus-visible,
+.dreams input:focus-visible,
+.dreams textarea:focus-visible {
+  outline: 2px solid var(--accent, #5b4bdb);
+  outline-offset: 2px;
+}
+.dreams__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.dreams__item {
+  border-bottom: 1px solid var(--border, #ccc);
+}
+.dreams .dreams__open {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-radius: 0;
+  padding: 0.75rem 0;
+}
+.dreams__date {
+  display: block;
+  font-weight: 600;
+}
+.dreams__preview {
+  display: block;
+  color: var(--muted, #666);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.dreams__empty,
+.dreams__loading {
+  color: var(--muted, #666);
+}
+.dreams__error {
+  color: #b3261e;
+  margin: 0.5rem 0;
+}
+.dreams__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+.dreams__field input,
+.dreams__field textarea {
+  font: inherit;
+  padding: 0.5rem;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 0.5rem;
+  background: var(--bg, transparent);
+  color: inherit;
+}
+.dreams__field textarea {
+  min-height: 12rem;
+  resize: vertical;
+  white-space: pre-wrap;
+}
+.dreams__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.dreams__spacer {
+  flex: 1;
+}
