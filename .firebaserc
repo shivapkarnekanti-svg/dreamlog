@@ -1,1 +1,5 @@
-﻿{ "projects": { "default": "dreamlog-app-5754" } }
+{
+  "projects": {
+    "default": "dreamlog-app-5754"
+  }
+}

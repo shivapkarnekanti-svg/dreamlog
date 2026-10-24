@@ -9,6 +9,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
+      workbox: { navigateFallbackDenylist: [/^\/verify\.html$/, /^\/build-hashes\.txt$/] },
       manifest: {
         name: 'Dreamlog',
         short_name: 'Dreamlog',

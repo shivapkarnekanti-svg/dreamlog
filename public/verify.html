@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Verify this build - Dreamlog</title>
+    <link rel="stylesheet" href="/verify.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Verify this build</h1>
+      <p>
+        Dreamlog says it cannot read your dreams. You should not have to take our word for it. Every
+        release is built by GitHub Actions from a tagged commit of the public code, and the SHA-256
+        hash of every file it publishes is listed in
+        <a href="/build-hashes.txt">build-hashes.txt</a>. Rebuild the same commit yourself and the
+        hashes must match what this site serves.
+      </p>
+      <h2>1. Rebuild the tagged commit</h2>
+      <pre><code>git clone https://github.com/shivapkarnekanti-svg/dreamlog
+cd dreamlog
+git checkout m5-done   # use the tag shown in the GitHub release
+npm ci
+# public Firebase web config (not secret):
+export VITE_FIREBASE_API_KEY=AIzaSyAYx8pkrmZ9AnTG_62iopJV3W-8kpjhI8A
+export VITE_FIREBASE_AUTH_DOMAIN=dreamlog-app-5754.firebaseapp.com
+export VITE_FIREBASE_PROJECT_ID=dreamlog-app-5754
+export VITE_FIREBASE_APP_ID=1:619711301309:web:9281b1048412702a9959d4
+export VITE_USE_EMULATORS=false
+npm run build</code></pre>
+      <h2>2. Compare the hashes</h2>
+      <pre><code>curl -s https://dreamlog-app-5754.web.app/build-hashes.txt | diff - dist/build-hashes.txt</code></pre>
+      <p>No output means every file matches.</p>
+      <h2>3. Check where the page can send data</h2>
+      <p>
+        The page is served with a Content-Security-Policy that only allows network calls to your
+        browser's own origin, Firebase (sign-in and storage of encrypted data), and
+        <code>api.anthropic.com</code> (only when you press &ldquo;Analyze with AI&rdquo;). Open
+        your browser's developer tools, Network tab, and watch: dream text should never appear in a
+        request except that one button.
+      </p>
+      <p class="muted">
+        Want to avoid trusting any single deployment? Fork the repo, create your own free Firebase
+        project and deploy it. The README explains how.
+      </p>
+      <p><a href="/">Back to Dreamlog</a></p>
+    </main>
+  </body>
+</html>

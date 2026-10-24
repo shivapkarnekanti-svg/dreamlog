@@ -4,6 +4,7 @@ import { auth } from './firebase'
 import { loadKeyRecord } from './data/store'
 import type { KeyRecord } from './crypto/vault'
 import { AuthScreen } from './auth/AuthScreen'
+import { Landing } from './auth/Landing'
 import { VerifyScreen } from './auth/VerifyScreen'
 import { SetupScreen } from './auth/SetupScreen'
 import { UnlockScreen } from './auth/UnlockScreen'
@@ -56,7 +57,12 @@ export function App() {
   if (user === undefined) {
     body = loading
   } else if (user === null) {
-    body = <AuthScreen />
+    body = (
+      <>
+        <AuthScreen />
+        <Landing />
+      </>
+    )
   } else if (!user.emailVerified) {
     body = <VerifyScreen user={user} onChecked={() => setTick((t) => t + 1)} />
   } else if (record === undefined) {
