@@ -28,6 +28,8 @@ export function VerifyScreen({ user, onChecked }: { user: User; onChecked: () =>
     setBusy(true)
     try {
       await user.reload()
+      // Firestore rules read email_verified from the ID token, which reload() does not refresh.
+      if (user.emailVerified) await user.getIdToken(true)
       if (user.emailVerified) onChecked()
       else setError('Your email is not verified yet. Open the link in the email first.')
     } catch (e) {

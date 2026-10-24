@@ -6,7 +6,7 @@ Read `PROGRESS.md` first, then `PLAN.md` only as needed. Don't read node_modules
 
 - `npm run dev`: Vite dev server · `npm run emulators`: Auth + Firestore emulators (project `demo-dreamlog`, Java 21+)
 - `npm test`: Vitest unit · `npm run test:rules`: rules tests (run only when rules or rules-tests change)
-- `npm run test:e2e:quick <spec>`: desktop-only Playwright, touched specs only. Full `test:e2e` runs only inside `verify`.
+- Quick e2e, touched specs only: `npx firebase emulators:exec --only auth,firestore --project demo-dreamlog "npx playwright test --project=desktop e2e/<spec>"`. Full `test:e2e` runs only inside `verify`.
 - `npm run verify`: lint, typecheck, unit, rules, e2e, build, size, audit. **Must pass before a `mN-done` tag, a deploy, or a push.**
 
 ## Stack
