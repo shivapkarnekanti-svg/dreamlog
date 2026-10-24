@@ -31,11 +31,82 @@ export interface Sealed {
   ciphertext: Bytes
 }
 
+export const EMOTIONS = [
+  'joy',
+  'fear',
+  'anxiety',
+  'sadness',
+  'anger',
+  'love',
+  'confusion',
+  'wonder',
+  'peace',
+  'shame',
+  'excitement',
+  'disgust',
+] as const
+export type Emotion = (typeof EMOTIONS)[number]
+
+export const MAX_LIST_ITEMS = 20
+export const MAX_ITEM_CHARS = 40
+
 export interface DreamPayload {
   v: 1
   /** The night of the dream, YYYY-MM-DD. */
   date: string
   text: string
+  // Everything below is optional on disk, so dreams saved before these fields still decode.
+  emotions?: Emotion[]
+  people?: string[]
+  places?: string[]
+  /** Lowercased. */
+  tags?: string[]
+  lucid?: boolean
+  nightmare?: boolean
+  recurring?: boolean
+  sleepQuality?: number | null
+  wakingMood?: number | null
+}
+
+/** Trims, drops empties, cuts to 40 characters, dedupes (case-insensitively), keeps at most 20. */
+export function cleanList(values: unknown, lowercase = false): string[] {
+  if (!Array.isArray(values)) return []
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const raw of values) {
+    if (typeof raw !== 'string') continue
+    let item = Array.from(raw.trim().replace(/\s+/g, ' ')).slice(0, MAX_ITEM_CHARS).join('').trim()
+    if (lowercase) item = item.toLowerCase()
+    const key = item.toLowerCase()
+    if (!item || seen.has(key)) continue
+    seen.add(key)
+    out.push(item)
+    if (out.length === MAX_LIST_ITEMS) break
+  }
+  return out
+}
+
+const rating = (v: unknown): number | null =>
+  typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 5 ? v : null
+
+/** Fills defaults and cleans every optional field. Safe on old or hand-edited payloads. */
+export function normalizePayload<T extends { date: string; text: string }>(input: T): DreamPayload {
+  const o = input as Record<string, unknown>
+  const given = Array.isArray(o.emotions) ? (o.emotions as unknown[]) : []
+  return {
+    v: 1,
+    date: input.date,
+    text: input.text,
+    emotions: EMOTIONS.filter((e) => given.includes(e)),
+    people: cleanList(o.people),
+    places: cleanList(o.places),
+    tags: cleanList(o.tags, true),
+    lucid: o.lucid === true,
+    nightmare: o.nightmare === true,
+    recurring: o.recurring === true,
+    sleepQuality: rating(o.sleepQuality),
+    wakingMood: rating(o.wakingMood),
+  }
 }
 
 export class WrongSecretError extends Error {

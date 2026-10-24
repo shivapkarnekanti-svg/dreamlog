@@ -1,7 +1,26 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { decryptDream, encryptDream, type DreamPayload } from '../crypto/vault'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import {
+  decryptDream,
+  EMOTIONS,
+  encryptDream,
+  normalizePayload,
+  type DreamPayload,
+  type Emotion,
+} from '../crypto/vault'
 import { createDream, deleteDream, newDreamId, updateDream, watchDreams } from '../data/store'
-import { MAX_TEXT, previewText, sortDreams, todayISO, type DreamRow } from './helpers'
+import { ChipInput } from './ChipInput'
+import { RatingGroup } from './RatingGroup'
+import {
+  collectValues,
+  filterDreams,
+  FLAGS,
+  MAX_TEXT,
+  previewText,
+  sortDreams,
+  todayISO,
+  type DreamRow,
+  type Flag,
+} from './helpers'
 import './dreams.css'
 
 type Row = DreamRow<DreamPayload>
@@ -11,6 +30,13 @@ interface Editing {
   id: string | null
   payload: DreamPayload
 }
+
+const FLAG_LABEL: Record<Flag, string> = {
+  lucid: 'Lucid',
+  nightmare: 'Nightmare',
+  recurring: 'Recurring',
+}
+const MAX_BADGES = 3
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong')
 
@@ -22,6 +48,9 @@ export function DreamsScreen(props: { uid: string; dataKey: CryptoKey; onLock: (
   const [error, setError] = useState('')
   const [date, setDate] = useState('')
   const [text, setText] = useState('')
+  const [form, setForm] = useState<DreamPayload>(() => normalizePayload({ date: '', text: '' }))
+  const [query, setQuery] = useState('')
+  const [flags, setFlags] = useState<Flag[]>([])
   const newBtn = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -33,11 +62,8 @@ export function DreamsScreen(props: { uid: string; dataKey: CryptoKey; onLock: (
         void Promise.all(
           stored.map(async (s): Promise<Row> => {
             try {
-              return {
-                id: s.id,
-                createdAt: s.createdAt,
-                payload: await decryptDream(dataKey, uid, s.id, s),
-              }
+              const payload = await decryptDream(dataKey, uid, s.id, s)
+              return { id: s.id, createdAt: s.createdAt, payload: normalizePayload(payload) }
             } catch {
               return { id: s.id, createdAt: s.createdAt, payload: null }
             }
@@ -54,8 +80,19 @@ export function DreamsScreen(props: { uid: string; dataKey: CryptoKey; onLock: (
     }
   }, [uid, dataKey])
 
+  const known = useMemo(
+    () => ({
+      people: collectValues(rows ?? [], 'people'),
+      places: collectValues(rows ?? [], 'places'),
+      tags: collectValues(rows ?? [], 'tags'),
+    }),
+    [rows],
+  )
+  const shown = useMemo(() => filterDreams(rows ?? [], query, flags), [rows, query, flags])
+
   function open(next: Editing) {
     setEditing(next)
+    setForm(normalizePayload(next.payload))
     setDate(next.payload.date)
     setText(next.payload.text)
     setConfirming(false)
@@ -72,7 +109,7 @@ export function DreamsScreen(props: { uid: string; dataKey: CryptoKey; onLock: (
     e.preventDefault()
     if (!editing || !text.trim() || !date) return
     const id = editing.id ?? newDreamId(uid)
-    const payload: DreamPayload = { ...editing.payload, date, text }
+    const payload = normalizePayload({ ...form, date, text })
     try {
       const sealed = await encryptDream(dataKey, uid, id, payload)
       // Not awaited: Firestore queues the write while offline.
@@ -83,6 +120,15 @@ export function DreamsScreen(props: { uid: string; dataKey: CryptoKey; onLock: (
     } catch (err) {
       setError(`Couldn't save: ${msg(err)}`)
     }
+  }
+
+  function setEmotion(emo: Emotion, on: boolean) {
+    const rest = (form.emotions ?? []).filter((x) => x !== emo)
+    setForm({ ...form, emotions: on ? [...rest, emo] : rest })
+  }
+
+  function toggleFlag(f: Flag) {
+    setFlags((cur) => (cur.includes(f) ? cur.filter((x) => x !== f) : [...cur, f]))
   }
 
   function remove(id: string) {
@@ -117,6 +163,66 @@ export function DreamsScreen(props: { uid: string; dataKey: CryptoKey; onLock: (
               autoFocus
             />
           </div>
+          <fieldset className="dreams__group">
+            <legend>Emotions</legend>
+            <div className="dreams__chips">
+              {EMOTIONS.map((emo) => {
+                const on = form.emotions?.includes(emo) ?? false
+                return (
+                  <button
+                    key={emo}
+                    type="button"
+                    className="dreams__toggle"
+                    aria-pressed={on}
+                    onClick={() => setEmotion(emo, !on)}
+                  >
+                    {emo}
+                  </button>
+                )
+              })}
+            </div>
+          </fieldset>
+          <ChipInput
+            label="People"
+            values={form.people ?? []}
+            suggestions={known.people}
+            onChange={(people) => setForm({ ...form, people })}
+          />
+          <ChipInput
+            label="Places"
+            values={form.places ?? []}
+            suggestions={known.places}
+            onChange={(places) => setForm({ ...form, places })}
+          />
+          <ChipInput
+            label="Tags"
+            lowercase
+            values={form.tags ?? []}
+            suggestions={known.tags}
+            onChange={(tags) => setForm({ ...form, tags })}
+          />
+          <div className="dreams__group dreams__checks">
+            {FLAGS.map((f) => (
+              <label key={f} className="dreams__choice">
+                <input
+                  type="checkbox"
+                  checked={form[f] === true}
+                  onChange={(e) => setForm({ ...form, [f]: e.target.checked })}
+                />
+                <span>{FLAG_LABEL[f]}</span>
+              </label>
+            ))}
+          </div>
+          <RatingGroup
+            legend="Sleep quality"
+            value={form.sleepQuality ?? null}
+            onChange={(sleepQuality) => setForm({ ...form, sleepQuality })}
+          />
+          <RatingGroup
+            legend="Waking mood"
+            value={form.wakingMood ?? null}
+            onChange={(wakingMood) => setForm({ ...form, wakingMood })}
+          />
           {error && (
             <p className="dreams__error" role="alert">
               {error}
@@ -159,7 +265,9 @@ export function DreamsScreen(props: { uid: string; dataKey: CryptoKey; onLock: (
           type="button"
           className="primary"
           ref={newBtn}
-          onClick={() => open({ id: null, payload: { v: 1, date: todayISO(), text: '' } })}
+          onClick={() =>
+            open({ id: null, payload: normalizePayload({ date: todayISO(), text: '' }) })
+          }
         >
           New dream
         </button>
@@ -177,27 +285,72 @@ export function DreamsScreen(props: { uid: string; dataKey: CryptoKey; onLock: (
       ) : rows.length === 0 ? (
         <p className="dreams__empty">No dreams yet</p>
       ) : (
-        <ul className="dreams__list">
-          {rows.map((r) => (
-            <li key={r.id} className="dreams__item">
-              {r.payload ? (
-                <button
-                  type="button"
-                  className="dreams__open"
-                  onClick={() => open({ id: r.id, payload: r.payload! })}
-                >
-                  <span className="dreams__date">{r.payload.date}</span>
-                  <span className="dreams__preview">{previewText(r.payload.text)}</span>
-                </button>
-              ) : (
-                <div className="dreams__open">
-                  <span className="dreams__preview">Couldn't decrypt this dream</span>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+        <>
+          <div className="dreams__field">
+            <label htmlFor="dream-search">Search</label>
+            <input
+              id="dream-search"
+              type="search"
+              value={query}
+              autoComplete="off"
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+          <div className="dreams__chips">
+            {FLAGS.map((f) => (
+              <button
+                key={f}
+                type="button"
+                className="dreams__toggle"
+                aria-pressed={flags.includes(f)}
+                onClick={() => toggleFlag(f)}
+              >
+                {FLAG_LABEL[f]}
+              </button>
+            ))}
+          </div>
+          {shown.length === 0 && <p className="dreams__empty">No matching dreams</p>}
+          <ul className="dreams__list">
+            {shown.map((r) => (
+              <li key={r.id} className="dreams__item">
+                {r.payload ? (
+                  <button
+                    type="button"
+                    className="dreams__open"
+                    onClick={() => open({ id: r.id, payload: r.payload! })}
+                  >
+                    <span className="dreams__date">{r.payload.date}</span>
+                    <span className="dreams__preview">{previewText(r.payload.text)}</span>
+                    <Badges payload={r.payload} />
+                  </button>
+                ) : (
+                  <div className="dreams__open">
+                    <span className="dreams__preview">Couldn't decrypt this dream</span>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </main>
+  )
+}
+
+function Badges({ payload }: { payload: DreamPayload }) {
+  const flagBadges = FLAGS.filter((f) => payload[f] === true).map((f) => FLAG_LABEL[f])
+  const more = [...(payload.emotions ?? []), ...(payload.tags ?? []).map((t) => '#' + t)]
+  const items = [...flagBadges, ...more.slice(0, MAX_BADGES)]
+  if (items.length === 0) return null
+  const extra = more.length - MAX_BADGES
+  return (
+    <span className="dreams__badges">
+      {items.map((b) => (
+        <span key={b} className="dreams__badge">
+          {b}
+        </span>
+      ))}
+      {extra > 0 && <span className="dreams__badge">+{extra}</span>}
+    </span>
   )
 }

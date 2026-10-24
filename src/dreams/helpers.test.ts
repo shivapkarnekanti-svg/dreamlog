@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { previewText, sortDreams, todayISO } from './helpers'
+import {
+  collectValues,
+  filterDreams,
+  previewText,
+  sortDreams,
+  todayISO,
+  type Searchable,
+} from './helpers'
 
 const row = (id: string, date: string | null, t: number) => ({
   id,
@@ -35,5 +42,49 @@ describe('previewText', () => {
 describe('todayISO', () => {
   it('formats local date', () => {
     expect(todayISO(new Date(2024, 0, 5))).toBe('2024-01-05')
+  })
+})
+
+describe('filterDreams', () => {
+  const r = (id: string, p: Partial<Searchable> | null) => ({
+    id,
+    payload: p ? { date: '2024-01-01', text: '', ...p } : null,
+  })
+  const rows = [
+    r('a', { text: 'Flying over the Sea', people: ['Mum'], lucid: true }),
+    r('b', { text: 'school exam', tags: ['stress'], emotions: ['anxiety'], nightmare: true }),
+    r('c', { text: 'quiet', places: ['Lisbon'], lucid: true, nightmare: true }),
+    r('d', null),
+  ]
+  const ids = (x: { id: string }[]) => x.map((i) => i.id)
+  it('returns everything with no query or flags', () => {
+    expect(ids(filterDreams(rows, '  '))).toEqual(['a', 'b', 'c', 'd'])
+  })
+  it('matches text, people, places, tags and emotions case-insensitively', () => {
+    expect(ids(filterDreams(rows, 'SEA'))).toEqual(['a'])
+    expect(ids(filterDreams(rows, 'mum'))).toEqual(['a'])
+    expect(ids(filterDreams(rows, 'lisbon'))).toEqual(['c'])
+    expect(ids(filterDreams(rows, 'STRESS'))).toEqual(['b'])
+    expect(ids(filterDreams(rows, 'anxi'))).toEqual(['b'])
+  })
+  it('requires every word', () => {
+    expect(ids(filterDreams(rows, 'school anxiety'))).toEqual(['b'])
+    expect(ids(filterDreams(rows, 'school sea'))).toEqual([])
+  })
+  it('requires every selected flag and hides undecryptable rows', () => {
+    expect(ids(filterDreams(rows, '', ['lucid']))).toEqual(['a', 'c'])
+    expect(ids(filterDreams(rows, '', ['lucid', 'nightmare']))).toEqual(['c'])
+    expect(ids(filterDreams(rows, 'zzz'))).toEqual([])
+  })
+})
+
+describe('collectValues', () => {
+  it('orders by use then name', () => {
+    const rows = [
+      { payload: { date: 'x', text: '', tags: ['b', 'a'] } },
+      { payload: { date: 'x', text: '', tags: ['b'] } },
+      { payload: null },
+    ]
+    expect(collectValues(rows, 'tags')).toEqual(['b', 'a'])
   })
 })

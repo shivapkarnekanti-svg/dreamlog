@@ -30,3 +30,60 @@ export function todayISO(now = new Date()): string {
   const p = (n: number) => String(n).padStart(2, '0')
   return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`
 }
+
+export type Flag = 'lucid' | 'nightmare' | 'recurring'
+export const FLAGS: readonly Flag[] = ['lucid', 'nightmare', 'recurring']
+
+export interface Searchable {
+  date: string
+  text: string
+  emotions?: readonly string[]
+  people?: readonly string[]
+  places?: readonly string[]
+  tags?: readonly string[]
+  lucid?: boolean
+  nightmare?: boolean
+  recurring?: boolean
+}
+
+/**
+ * Keeps rows whose text, people, places, tags or emotions contain the query (case-insensitive,
+ * every word must match somewhere) and that have every selected flag. Undecryptable rows only
+ * show when nothing is being filtered.
+ */
+export function filterDreams<T extends { payload: Searchable | null }>(
+  rows: readonly T[],
+  query: string,
+  flags: readonly Flag[] = [],
+): T[] {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
+  if (words.length === 0 && flags.length === 0) return [...rows]
+  return rows.filter(({ payload: p }) => {
+    if (!p) return false
+    if (!flags.every((f) => p[f] === true)) return false
+    const hay = [
+      p.text,
+      ...(p.people ?? []),
+      ...(p.places ?? []),
+      ...(p.tags ?? []),
+      ...(p.emotions ?? []),
+    ]
+      .join('\n')
+      .toLowerCase()
+    return words.every((w) => hay.includes(w))
+  })
+}
+
+/** Every distinct value used so far, most used first then alphabetical, for suggestions. */
+export function collectValues(
+  rows: readonly { payload: Searchable | null }[],
+  field: 'people' | 'places' | 'tags',
+): string[] {
+  const counts = new Map<string, number>()
+  for (const { payload } of rows) {
+    for (const v of payload?.[field] ?? []) counts.set(v, (counts.get(v) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([v]) => v)
+}

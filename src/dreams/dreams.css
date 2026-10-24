@@ -98,3 +98,79 @@
 .dreams__spacer {
   flex: 1;
 }
+.dreams__group {
+  border: 0;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+.dreams__group legend {
+  padding: 0;
+  margin-bottom: 0.25rem;
+}
+.dreams__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+.dreams__group .dreams__chips {
+  margin-bottom: 0;
+}
+.dreams .dreams__toggle {
+  border-radius: 999px;
+  padding: 0.25rem 0.8rem;
+  min-height: 2.5rem;
+}
+.dreams .dreams__toggle[aria-pressed='true'] {
+  background: var(--accent, #5b4bdb);
+  border-color: var(--accent, #5b4bdb);
+  color: #fff;
+}
+.dreams__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 999px;
+  padding: 0 0 0 0.75rem;
+  overflow-wrap: anywhere;
+}
+.dreams .dreams__chip button {
+  border: 0;
+  min-width: 2.5rem;
+  padding: 0;
+  border-radius: 999px;
+}
+.dreams__checks,
+.dreams__rating {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+.dreams__choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  cursor: pointer;
+}
+.dreams__choice input {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+}
+.dreams__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+.dreams__badge {
+  font-size: 0.8rem;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 999px;
+  padding: 0 0.5rem;
+  color: var(--muted, #666);
+}
