@@ -21,8 +21,10 @@
 cd dreamlog
 git checkout m5-done   # use the tag shown in the GitHub release
 npm ci
-# public Firebase web config (not secret):
-export VITE_FIREBASE_API_KEY=AIzaSyAYx8pkrmZ9AnTG_62iopJV3W-8kpjhI8A
+# public Firebase web config (not secret). The API key is not listed here; read it from the
+# live site's own script, where every visitor downloads it:
+JS=$(curl -s https://dreamlog-app-5754.web.app/ | grep -o '/assets/index-[^"]*[.]js')
+export VITE_FIREBASE_API_KEY=$(curl -s "https://dreamlog-app-5754.web.app$JS" | grep -o 'AIza[0-9A-Za-z_-]*' | head -1)
 export VITE_FIREBASE_AUTH_DOMAIN=dreamlog-app-5754.firebaseapp.com
 export VITE_FIREBASE_PROJECT_ID=dreamlog-app-5754
 export VITE_FIREBASE_APP_ID=1:619711301309:web:9281b1048412702a9959d4
