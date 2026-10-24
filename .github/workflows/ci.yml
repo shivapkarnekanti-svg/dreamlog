@@ -23,5 +23,6 @@ jobs:
           distribution: temurin
           java-version: 21
       - run: npm ci
+      - run: npm install -g firebase-tools@15.34.0
       - run: npx playwright install --with-deps chromium
       - run: npm run verify

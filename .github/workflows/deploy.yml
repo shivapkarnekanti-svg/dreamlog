@@ -33,6 +33,7 @@ jobs:
           distribution: temurin
           java-version: 21
       - run: npm ci
+      - run: npm install -g firebase-tools@15.34.0
       - run: npx playwright install --with-deps chromium
       # Everything except the build: the build below uses the real Firebase config.
       - run: npm run lint && npm run typecheck && npm test && npm run test:rules && npm run test:e2e && npm audit --audit-level=low
@@ -40,7 +41,7 @@ jobs:
       - uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      - run: npx firebase deploy --only firestore:rules,hosting --project "$VITE_FIREBASE_PROJECT_ID"
+      - run: firebase deploy --only firestore:rules,hosting --project "$VITE_FIREBASE_PROJECT_ID"
       - name: Publish build hashes
         env:
           GH_TOKEN: ${{ github.token }}
