@@ -46,8 +46,8 @@ Security reports: see [SECURITY.md](SECURITY.md).
 
 ## Live site and verifying it
 
-A test deployment runs at https://dreamlog-app-5754.web.app. Every release is built by GitHub Actions from a `mN-done` tag, and the SHA-256 of each published file is attached to the GitHub release and served at `/build-hashes.txt`. The `/verify.html` page on the site explains how to rebuild a tag and compare. The site is served with a strict Content-Security-Policy that only allows calls to Firebase and, for the opt-in AI button, `api.anthropic.com`.
+A test deployment runs at https://dreamlog-app-5754.web.app. For now the maintainer deploys from their own machine. For every `mN-done` tag, GitHub Actions also builds the same code and attaches the SHA-256 of each built file to the GitHub release, and the live site serves its own list at `/build-hashes.txt`. Compare the two to check that the live site matches the public code. Deploying from CI is planned. The `/verify.html` page on the site explains how to rebuild a tag and compare. The site is served with a strict Content-Security-Policy that only allows calls to Firebase and, for the opt-in AI button, `api.anthropic.com`.
 
 ## Deploying your own copy
 
-Fork the repo, create your own free Firebase project (Spark plan), enable Email/Password sign-in and Firestore, set the four `VITE_FIREBASE_*` repository variables and a `FIREBASE_SERVICE_ACCOUNT` secret, then push a `mN-done` tag. See `.github/workflows/deploy.yml`.
+Fork the repo, create your own free Firebase project (Spark plan), enable Email/Password sign-in and Firestore, build with your own `VITE_FIREBASE_*` values and run `firebase deploy`. `.github/workflows/deploy.yml` shows the verified build steps.

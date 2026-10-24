@@ -8,7 +8,7 @@ Plan: `PLAN.md`. Rules for working here: `CLAUDE.md`.
 - [x] M2: Entry form fields, search (`m2-done`)
 - [x] M3: Patterns dashboard (`m3-done`)
 - [x] M4: Opt-in AI read (own key), export, delete account (`m4-done`)
-- [ ] M5: Landing page, CI deploy from tags with build hashes, CSP, deploy (ask first)
+- [x] M5: Landing text, CSP and security headers, build hashes, verify page, CI, deploy (`m5-done`; real-device PWA check still open)
 - [ ] M6 (optional): theme grouping with transformers.js
 
 A milestone is ticked and tagged `mN-done` only after `npm run verify` passes.
@@ -25,18 +25,16 @@ A milestone is ticked and tagged `mN-done` only after `npm run verify` passes.
 
 ## Next up
 
-M5 (ask the user first: Firebase project ID/region, GitHub repo, any deploy, any new package):
-
-1. CSP header (connect-src only Firebase + api.anthropic.com), security headers in firebase.json.
-2. GitHub Actions: run verify on PRs; deploy from `mN-done` tags with published build hashes; "Verify this build" page.
-3. Landing page, README screenshots, CONTRIBUTING.md, issue templates; branch protection once the repo exists.
-4. Real-device check of the PWA install and offline logging.
+1. Real-device check of the PWA install and offline logging.
+2. Optional: deploy from CI with keyless login (Workload Identity Federation) and a `production` environment approval.
+3. Branch protection on `main` once the team grows; close GitHub secret-scanning alert 1 and restrict the Firebase API key in Google Cloud.
+4. M6 (optional): theme grouping with transformers.js (needs package approval).
 
 ## Notes
 
 - Firebase project created 2026-10-23: `dreamlog-app-5754` (Spark, region nam5 chosen; Firestore database and Email/Password sign-in still to be enabled in the console). Local work still runs on the emulators (`demo-dreamlog`).
 - GitHub repo: https://github.com/shivapkarnekanti-svg/dreamlog (public, nothing pushed yet).
-- Deployed 2026-10-24 (after a passing verify): Firestore rules and Hosting at https://dreamlog-app-5754.web.app. No CSP or security headers yet (M5); treat as a test site.
+- Deployed 2026-10-24 from the maintainer PC with `firebase deploy` (no CI deploy key by choice): Firestore rules and Hosting at https://dreamlog-app-5754.web.app, with CSP and security headers. Tag workflow `deploy.yml` re-verifies, builds and publishes build hashes only.
 - Verified 2026-10-24: `npm run verify` passes (49 unit, 11 rules, 16 e2e on desktop + pixel-390, 0 audit issues).
 - Flaky once under low memory: first journal e2e timed out waiting for the sign-in button; passed on rerun.
 - Fixed during verification: ID token refresh after email verification; recurring-dream detection 5.3s to 0.6s at 2,000 dreams.

@@ -1,6 +1,8 @@
-name: Deploy
+name: Release
 
-# Runs only for milestone tags, so the live site is always built from public, tagged code.
+# Runs only for milestone tags. It re-verifies the tagged code, builds it with the public Firebase
+# config and publishes the SHA-256 of every built file. It does not deploy: the maintainer deploys
+# from their own machine for now, and /verify.html shows how to compare the live site to these hashes.
 on:
   push:
     tags: ['m*-done']
@@ -13,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  release:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -38,11 +40,7 @@ jobs:
       # Everything except the build: the build below uses the real Firebase config.
       - run: npm run lint && npm run typecheck && npm test && npm run test:rules && npm run test:e2e && npm audit --audit-level=low
       - run: npm run build
-      - uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      - run: firebase deploy --only firestore:rules,hosting --project "$VITE_FIREBASE_PROJECT_ID"
       - name: Publish build hashes
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/build-hashes.txt --title "$GITHUB_REF_NAME" --notes "SHA-256 of every file served by this release. See /verify.html on the site."
+        run: gh release create "$GITHUB_REF_NAME" dist/build-hashes.txt --title "$GITHUB_REF_NAME" --notes "SHA-256 of every file built from this tag. See /verify.html on the site."
