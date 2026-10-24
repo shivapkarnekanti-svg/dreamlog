@@ -1,0 +1,74 @@
+rules_version = '2';
+// Deny by default. The server only ever holds ciphertext: a key record at users/{uid} and
+// encrypted dreams at users/{uid}/dreams/{id}. See docs/crypto.md.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null
+        && request.auth.uid == uid
+        && request.auth.token.email_verified == true;
+    }
+
+    function isBytes(v, min, max) {
+      return v is bytes && v.size() >= min && v.size() <= max;
+    }
+
+    // users/{uid}: the wrapped data key. Two wraps of a 32-byte key (+16-byte GCM tag each).
+    function passphraseFieldsOk(d) {
+      return d.kdf == 'PBKDF2-SHA256'
+        && d.iterations is int && d.iterations >= 100000 && d.iterations <= 10000000
+        && isBytes(d.salt, 16, 16)
+        && isBytes(d.passIv, 12, 12)
+        && isBytes(d.passWrapped, 48, 48);
+    }
+
+    function keyRecordOk(d) {
+      return d.keys().hasOnly(['v', 'kdf', 'iterations', 'salt', 'passIv', 'passWrapped',
+                               'recoveryIv', 'recoveryWrapped', 'createdAt', 'updatedAt'])
+        && d.keys().hasAll(['v', 'kdf', 'iterations', 'salt', 'passIv', 'passWrapped',
+                            'recoveryIv', 'recoveryWrapped', 'createdAt', 'updatedAt'])
+        && d.v == 1
+        && passphraseFieldsOk(d)
+        && isBytes(d.recoveryIv, 12, 12)
+        && isBytes(d.recoveryWrapped, 48, 48)
+        && d.updatedAt == request.time;
+    }
+
+    match /users/{uid} {
+      allow get: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && keyRecordOk(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+      // A passphrase change re-wraps the same data key. The recovery wrap never changes, and
+      // nothing else may: replacing the key would orphan every dream.
+      allow update: if isOwner(uid)
+        && keyRecordOk(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['iterations', 'salt', 'passIv', 'passWrapped', 'updatedAt']);
+      // Account deletion arrives in M4.
+
+      // users/{uid}/dreams/{id}: only {iv, ciphertext, createdAt, updatedAt}. No plaintext fields.
+      function dreamOk(d) {
+        return d.keys().hasOnly(['iv', 'ciphertext', 'createdAt', 'updatedAt'])
+          && d.keys().hasAll(['iv', 'ciphertext', 'createdAt', 'updatedAt'])
+          && isBytes(d.iv, 12, 12)
+          // 16-byte GCM tag plus the JSON payload; 512 KiB is far above any real dream.
+          && isBytes(d.ciphertext, 17, 524288)
+          && d.updatedAt == request.time;
+      }
+
+      match /dreams/{id} {
+        allow get, list: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && id.size() <= 40
+          && dreamOk(request.resource.data)
+          && request.resource.data.createdAt == request.time;
+        allow update: if isOwner(uid)
+          && dreamOk(request.resource.data)
+          && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if isOwner(uid);
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+# Dependencies and build output
+node_modules/
+dist/
+dev-dist/
+coverage/
+playwright-report/
+test-results/
+screenshots/
+
+# Local env (the Firebase web config is public, but keep local overrides out)
+.env.local
+.env.*.local
+
+# Secrets: never commit these
+*service-account*.json
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+*credentials*.json
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*.log
+
+# Recovery keys downloaded while testing
+dreamlog-recovery-key*.txt
+
+# Claude Code personal settings
+.claude/settings.local.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
