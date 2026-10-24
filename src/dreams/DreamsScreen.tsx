@@ -21,6 +21,8 @@ import {
   type DreamRow,
   type Flag,
 } from './helpers'
+import { Dashboard } from '../patterns/Dashboard'
+import type { PatternInput } from '../patterns/types'
 import './dreams.css'
 
 type Row = DreamRow<DreamPayload>
@@ -51,6 +53,7 @@ export function DreamsScreen(props: { uid: string; dataKey: CryptoKey; onLock: (
   const [form, setForm] = useState<DreamPayload>(() => normalizePayload({ date: '', text: '' }))
   const [query, setQuery] = useState('')
   const [flags, setFlags] = useState<Flag[]>([])
+  const [view, setView] = useState<'journal' | 'patterns'>('journal')
   const newBtn = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -86,6 +89,30 @@ export function DreamsScreen(props: { uid: string; dataKey: CryptoKey; onLock: (
       places: collectValues(rows ?? [], 'places'),
       tags: collectValues(rows ?? [], 'tags'),
     }),
+    [rows],
+  )
+  const patternInputs = useMemo<PatternInput[]>(
+    () =>
+      (rows ?? []).flatMap((r) => {
+        const p = r.payload
+        if (!p) return []
+        return [
+          {
+            id: r.id,
+            date: p.date,
+            text: p.text,
+            people: p.people ?? [],
+            places: p.places ?? [],
+            tags: p.tags ?? [],
+            emotions: p.emotions ?? [],
+            lucid: p.lucid === true,
+            nightmare: p.nightmare === true,
+            recurring: p.recurring === true,
+            sleepQuality: p.sleepQuality ?? null,
+            wakingMood: p.wakingMood ?? null,
+          },
+        ]
+      }),
     [rows],
   )
   const shown = useMemo(() => filterDreams(rows ?? [], query, flags), [rows, query, flags])
@@ -275,12 +302,38 @@ export function DreamsScreen(props: { uid: string; dataKey: CryptoKey; onLock: (
           Lock
         </button>
       </div>
+      <div className="dreams__chips">
+        <button
+          type="button"
+          className="dreams__toggle"
+          aria-pressed={view === 'journal'}
+          onClick={() => setView('journal')}
+        >
+          Journal
+        </button>
+        <button
+          type="button"
+          className="dreams__toggle"
+          aria-pressed={view === 'patterns'}
+          onClick={() => setView('patterns')}
+        >
+          Patterns
+        </button>
+      </div>
       {error && (
         <p className="dreams__error" role="alert">
           {error}
         </p>
       )}
-      {rows === null ? (
+      {view === 'patterns' && rows !== null ? (
+        <Dashboard
+          dreams={patternInputs}
+          onOpenDream={(id) => {
+            const r = rows.find((x) => x.id === id)
+            if (r?.payload) open({ id: r.id, payload: r.payload })
+          }}
+        />
+      ) : rows === null ? (
         <p className="dreams__loading">Loading…</p>
       ) : rows.length === 0 ? (
         <p className="dreams__empty">No dreams yet</p>
