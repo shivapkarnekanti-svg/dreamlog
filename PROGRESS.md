@@ -4,10 +4,10 @@ Plan: `PLAN.md`. Rules for working here: `CLAUDE.md`.
 
 ## Milestones
 
-- [ ] M1: Auth, passphrase + recovery key, encrypted dream create/list/edit/delete, rules and tests (coded; emulator tests not yet run)
-- [ ] M2: Entry form fields, search (coded; unit tests pass)
-- [ ] M3: Patterns dashboard (coded; unit tests pass)
-- [ ] M4: Opt-in AI read (own key), export, delete account (coded; unit tests pass, new rules test not yet run)
+- [x] M1: Auth, passphrase + recovery key, encrypted dream create/list/edit/delete, rules and tests (`m1-done`)
+- [x] M2: Entry form fields, search (`m2-done`)
+- [x] M3: Patterns dashboard (`m3-done`)
+- [x] M4: Opt-in AI read (own key), export, delete account (`m4-done`)
 - [ ] M5: Landing page, CI deploy from tags with build hashes, CSP, deploy (ask first)
 - [ ] M6 (optional): theme grouping with transformers.js
 
@@ -21,17 +21,20 @@ A milestone is ticked and tagged `mN-done` only after `npm run verify` passes.
 - M3: `src/patterns/*` (compute, text, Dashboard, SVG charts).
 - M4: `src/ai/*` (Analyze with AI), `src/account/*` (export, delete account), rules allow owner delete of `users/{uid}`.
 - Tabs in the dreams screen: Journal, Patterns, Analyze, Account.
-- 49 unit tests pass; lint and typecheck clean.
+- Verified end to end (see Notes).
 
 ## Next up
 
-1. **Run the emulator suites** (needs > 1.5 GB free RAM, Java 21+): `npm run test:rules`, then `npm run test:e2e:quick -- e2e/journal.spec.ts`. Fix whatever fails. The e2e spec and the new delete-rule test have never run.
-2. Add e2e for the M2 fields/search, the Patterns tab, export and delete account (quick project only).
-3. `npm run verify`, then tag `m1-done` … `m4-done`.
-4. M5 (ask the user first for the Firebase project ID/region, GitHub repo, any deploy): CSP header, CI deploy from tags with build hashes, "Verify this build" page, landing page.
+M5 (ask the user first: Firebase project ID/region, GitHub repo, any deploy, any new package):
+
+1. CSP header (connect-src only Firebase + api.anthropic.com), security headers in firebase.json.
+2. GitHub Actions: run verify on PRs; deploy from `mN-done` tags with published build hashes; "Verify this build" page.
+3. Landing page, README screenshots, CONTRIBUTING.md, issue templates; branch protection once the repo exists.
+4. Real-device check of the PWA install and offline logging.
 
 ## Notes
 
 - No Firebase project yet: everything runs on the emulators (`demo-dreamlog`).
-- The 2,000-dream pattern test takes ~5s alone (grows with n²); a typical journal is far smaller.
-- Update the pattern perf if journals above ~1,500 dreams matter (e.g. limit recurring detection to the last N).
+- Verified 2026-10-24: `npm run verify` passes (49 unit, 11 rules, 16 e2e on desktop + pixel-390, 0 audit issues).
+- Flaky once under low memory: first journal e2e timed out waiting for the sign-in button; passed on rerun.
+- Fixed during verification: ID token refresh after email verification; recurring-dream detection 5.3s to 0.6s at 2,000 dreams.
