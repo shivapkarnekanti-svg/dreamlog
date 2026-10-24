@@ -67,6 +67,50 @@ export async function unlock(page: Page, passphrase: string): Promise<void> {
   await page.getByRole('button', { name: 'Unlock', exact: true }).click()
 }
 
+export interface RichDream {
+  text: string
+  emotions?: string[]
+  people?: string[]
+  places?: string[]
+  tags?: string[]
+  flags?: ('Lucid' | 'Nightmare' | 'Recurring')[]
+}
+
+/** Add a dream through the form using emotions, chip inputs and flag checkboxes. */
+export async function addRichDream(page: Page, d: RichDream): Promise<void> {
+  await page.getByRole('button', { name: 'New dream' }).click()
+  await page.getByLabel('Dream', { exact: true }).fill(d.text)
+  for (const emo of d.emotions ?? []) {
+    await page.getByRole('button', { name: emo, exact: true }).click()
+  }
+  const chips: [string, string[] | undefined][] = [
+    ['People', d.people],
+    ['Places', d.places],
+    ['Tags', d.tags],
+  ]
+  for (const [label, values] of chips) {
+    for (const v of values ?? []) {
+      const input = page.getByLabel(label, { exact: true })
+      await input.fill(v)
+      await input.press('Enter')
+    }
+  }
+  for (const f of d.flags ?? []) {
+    await page.getByLabel(f, { exact: true }).check()
+  }
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByText(d.text)).toBeVisible()
+}
+
+/** Number of documents directly under users/ in the Firestore emulator. */
+export async function userDocCount(request: APIRequestContext): Promise<number> {
+  const res = await request.get(`${FIRESTORE_REST}/users`, {
+    headers: { Authorization: 'Bearer owner' },
+  })
+  const list = (await res.json()) as { documents?: unknown[] }
+  return list.documents?.length ?? 0
+}
+
 /** Raw stored dream documents for all users, from the Firestore emulator REST API. */
 export async function storedDreamsJson(request: APIRequestContext): Promise<string> {
   const headers = { Authorization: 'Bearer owner' }
