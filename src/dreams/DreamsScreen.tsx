@@ -21,6 +21,8 @@ import {
   type DreamRow,
   type Flag,
 } from './helpers'
+import { AccountPanel } from '../account/AccountPanel'
+import { AnalyzePanel } from '../ai/AnalyzePanel'
 import { Dashboard } from '../patterns/Dashboard'
 import type { PatternInput } from '../patterns/types'
 import './dreams.css'
@@ -53,7 +55,7 @@ export function DreamsScreen(props: { uid: string; dataKey: CryptoKey; onLock: (
   const [form, setForm] = useState<DreamPayload>(() => normalizePayload({ date: '', text: '' }))
   const [query, setQuery] = useState('')
   const [flags, setFlags] = useState<Flag[]>([])
-  const [view, setView] = useState<'journal' | 'patterns'>('journal')
+  const [view, setView] = useState<'journal' | 'patterns' | 'ai' | 'account'>('journal')
   const newBtn = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -319,13 +321,53 @@ export function DreamsScreen(props: { uid: string; dataKey: CryptoKey; onLock: (
         >
           Patterns
         </button>
+        <button
+          type="button"
+          className="dreams__toggle"
+          aria-pressed={view === 'ai'}
+          onClick={() => setView('ai')}
+        >
+          Analyze
+        </button>
+        <button
+          type="button"
+          className="dreams__toggle"
+          aria-pressed={view === 'account'}
+          onClick={() => setView('account')}
+        >
+          Account
+        </button>
       </div>
       {error && (
         <p className="dreams__error" role="alert">
           {error}
         </p>
       )}
-      {view === 'patterns' && rows !== null ? (
+      {view === 'ai' && rows !== null ? (
+        <AnalyzePanel
+          dreams={rows.flatMap((r) =>
+            r.payload
+              ? [
+                  {
+                    id: r.id,
+                    date: r.payload.date,
+                    text: r.payload.text,
+                    tags: r.payload.tags,
+                    emotions: r.payload.emotions,
+                  },
+                ]
+              : [],
+          )}
+          onClose={() => setView('journal')}
+        />
+      ) : view === 'account' && rows !== null ? (
+        <AccountPanel
+          uid={uid}
+          dreams={rows.flatMap((r) => (r.payload ? [{ id: r.id, payload: r.payload }] : []))}
+          onClose={() => setView('journal')}
+          onDeleted={onLock}
+        />
+      ) : view === 'patterns' && rows !== null ? (
         <Dashboard
           dreams={patternInputs}
           onOpenDream={(id) => {

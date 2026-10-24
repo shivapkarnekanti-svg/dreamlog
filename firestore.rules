@@ -46,7 +46,9 @@ service cloud.firestore {
         && keyRecordOk(request.resource.data)
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['iterations', 'salt', 'passIv', 'passWrapped', 'updatedAt']);
-      // Account deletion arrives in M4.
+      // Account deletion: the verified owner may delete their own key record (the client
+      // deletes the dreams first, then the login).
+      allow delete: if isOwner(uid);
 
       // users/{uid}/dreams/{id}: only {iv, ciphertext, createdAt, updatedAt}. No plaintext fields.
       function dreamOk(d) {

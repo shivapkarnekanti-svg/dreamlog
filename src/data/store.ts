@@ -5,6 +5,8 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
+  writeBatch,
   onSnapshot,
   orderBy,
   query,
@@ -120,4 +122,30 @@ export function updateDream(uid: string, id: string, s: Sealed) {
 
 export function deleteDream(uid: string, id: string) {
   return deleteDoc(doc(dreamsCol(uid), id))
+}
+
+/** One-shot read of every stored dream (server, or the cache when offline). */
+export async function loadAllDreamsOnce(uid: string): Promise<StoredDream[]> {
+  const snap = await getDocs(query(dreamsCol(uid), orderBy('createdAt', 'desc')))
+  return snap.docs.map((d) => {
+    const data = d.data({ serverTimestamps: 'estimate' })
+    return {
+      id: d.id,
+      iv: fromFs(data.iv),
+      ciphertext: fromFs(data.ciphertext),
+      createdAt: (data.createdAt as Timestamp).toDate(),
+      updatedAt: (data.updatedAt as Timestamp).toDate(),
+    }
+  })
+}
+
+/** Deletes every dream (batches of at most 400, awaited), then the key record. */
+export async function deleteAllUserData(uid: string) {
+  const snap = await getDocs(dreamsCol(uid))
+  for (let i = 0; i < snap.docs.length; i += 400) {
+    const batch = writeBatch(db)
+    for (const d of snap.docs.slice(i, i + 400)) batch.delete(d.ref)
+    await batch.commit()
+  }
+  await deleteDoc(keyRef(uid))
 }

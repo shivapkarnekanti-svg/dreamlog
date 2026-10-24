@@ -188,7 +188,14 @@ describe('key record', () => {
       updateDoc(ref, { createdAt: serverTimestamp(), updatedAt: serverTimestamp() }),
     )
     await assertFails(setDoc(ref, keyRecord()))
-    await assertFails(deleteDoc(ref))
+  })
+
+  it('only the verified owner can delete the key record', async () => {
+    const anon = env.unauthenticatedContext().firestore() as unknown as Firestore
+    await assertFails(deleteDoc(doc(as('bob'), 'users/alice')))
+    await assertFails(deleteDoc(doc(anon, 'users/alice')))
+    await assertFails(deleteDoc(doc(as('alice', false), 'users/alice')))
+    await assertSucceeds(deleteDoc(doc(as('alice'), 'users/alice')))
   })
 })
 
