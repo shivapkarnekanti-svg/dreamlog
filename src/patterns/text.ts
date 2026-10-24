@@ -98,19 +98,33 @@ export function findRecurring(dreams: PatternInput[]): RecurringGroup[] {
     }
     return i
   }
+  // Inverted index: accumulate dot products only for dreams sharing a term.
+  const postings = new Map<string, { doc: number; w: number }[]>()
+  for (let i = 0; i < n; i++) {
+    const v = vecs[i]!
+    if (v.size < 2) continue
+    for (const [t, w] of v) {
+      const list = postings.get(t)
+      if (list) list.push({ doc: i, w })
+      else postings.set(t, [{ doc: i, w }])
+    }
+  }
+  const acc = new Float64Array(n)
+  const touched: number[] = []
   for (let i = 0; i < n; i++) {
     const a = vecs[i]!
     if (a.size < 2) continue
-    for (let j = i + 1; j < n; j++) {
-      const b = vecs[j]!
-      if (b.size < 2) continue
-      const [small, big] = a.size <= b.size ? [a, b] : [b, a]
-      let dot = 0
-      for (const [t, w] of small) {
-        const o = big.get(t)
-        if (o !== undefined) dot += w * o
+    touched.length = 0
+    for (const [t, w] of a) {
+      for (const p of postings.get(t)!) {
+        if (p.doc <= i) continue
+        if (acc[p.doc] === 0) touched.push(p.doc)
+        acc[p.doc]! += w * p.w
       }
-      if (dot >= SIMILARITY) parent[find(i)] = find(j)
+    }
+    for (const j of touched) {
+      if (acc[j]! >= SIMILARITY) parent[find(i)] = find(j)
+      acc[j] = 0
     }
   }
 

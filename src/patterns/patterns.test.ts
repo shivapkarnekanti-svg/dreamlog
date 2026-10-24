@@ -176,9 +176,9 @@ describe('computePatterns', () => {
     )
     const t = Date.now()
     computePatterns(ds, NOW)
-    // ~5s alone; the bound is loose so a loaded machine running the whole suite doesn't flake.
-    expect(Date.now() - t).toBeLessThan(30_000)
-  })
+    // The bound is loose so a loaded machine running the whole suite doesn't flake.
+    expect(Date.now() - t).toBeLessThan(4_000)
+  }, 15_000)
 })
 
 describe('text', () => {
