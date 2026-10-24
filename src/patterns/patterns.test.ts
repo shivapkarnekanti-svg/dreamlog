@@ -176,7 +176,8 @@ describe('computePatterns', () => {
     )
     const t = Date.now()
     computePatterns(ds, NOW)
-    expect(Date.now() - t).toBeLessThan(10_000)
+    // ~5s alone; the bound is loose so a loaded machine running the whole suite doesn't flake.
+    expect(Date.now() - t).toBeLessThan(30_000)
   })
 })
 
