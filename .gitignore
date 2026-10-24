@@ -33,3 +33,6 @@ dreamlog-recovery-key*.txt
 Thumbs.db
 .vscode/*
 !.vscode/extensions.json
+
+# Public prod config lives in GitHub repository variables; keep a local copy out of git
+.env.production

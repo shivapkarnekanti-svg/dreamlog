@@ -43,3 +43,11 @@ Tests: `npm test`, `npm run test:rules`, `npm run test:e2e:quick`, or everything
 [AGPL-3.0](LICENSE). If you run a modified version as a website, you must publish your changes.
 
 Security reports: see [SECURITY.md](SECURITY.md).
+
+## Live site and verifying it
+
+A test deployment runs at https://dreamlog-app-5754.web.app. Every release is built by GitHub Actions from a `mN-done` tag, and the SHA-256 of each published file is attached to the GitHub release and served at `/build-hashes.txt`. The `/verify.html` page on the site explains how to rebuild a tag and compare. The site is served with a strict Content-Security-Policy that only allows calls to Firebase and, for the opt-in AI button, `api.anthropic.com`.
+
+## Deploying your own copy
+
+Fork the repo, create your own free Firebase project (Spark plan), enable Email/Password sign-in and Firestore, set the four `VITE_FIREBASE_*` repository variables and a `FIREBASE_SERVICE_ACCOUNT` secret, then push a `mN-done` tag. See `.github/workflows/deploy.yml`.
